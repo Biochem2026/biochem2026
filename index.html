@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BioTest Medical</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{
+      --bg:#f7fafc; --bg2:#eef4f8; --card:rgba(255,255,255,.94); --card2:rgba(255,255,255,.82);
+      --text:#172436; --muted:#66788d; --line:#dbe5ee; --primary:#2f6f9f; --primary2:#5f9fc8;
+      --good:#2f8f6b; --bad:#c84c4c; --warn:#c4872a; --shadow:0 18px 48px rgba(45,80,110,.11);
+      --radius:22px; --radius2:14px; --glass:blur(14px) saturate(1.05);
+    }
+    html[data-theme="dark"]{
+      --bg:#101820; --bg2:#142231; --card:rgba(24,35,48,.88); --card2:rgba(30,44,60,.72);
+      --text:#edf4fa; --muted:#9dadbf; --line:#2c4055; --primary:#6fa8cf; --primary2:#8bbad7;
+      --good:#63b493; --bad:#e17a7a; --warn:#d8aa5a; --shadow:0 18px 48px rgba(0,0,0,.28);
+    }
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:var(--text);background:linear-gradient(135deg,var(--bg),var(--bg2));min-height:100vh;overflow-x:hidden}
+    body:before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(47,111,159,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(47,111,159,.025) 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(to bottom,rgba(0,0,0,.7),transparent);pointer-events:none}
+    .orb{position:fixed;border-radius:999px;filter:blur(14px);opacity:.08;pointer-events:none}.o1{width:280px;height:280px;right:-90px;top:120px;background:#8bbad7}.o2{width:190px;height:190px;left:-70px;bottom:50px;background:#6fa8cf}.o3{width:130px;height:130px;right:15%;bottom:12%;background:#c8dce8}
+    .app{max-width:1240px;margin:0 auto;padding:24px;position:relative;z-index:1}.hidden{display:none!important}.soft{color:var(--muted)}.tiny{font-size:12px}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.logo{display:flex;gap:12px;align-items:center;font-weight:900;letter-spacing:.2px}.logoMark{width:44px;height:44px;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--primary2));display:grid;place-items:center;color:white;box-shadow:0 12px 26px rgba(47,111,159,.18)}
+    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;padding:14px 16px;border:1px solid var(--line);background:var(--card);backdrop-filter:var(--glass);border-radius:24px;box-shadow:var(--shadow)}
+    .nav{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.btn,.tab{border:1px solid var(--line);background:var(--card2);color:var(--text);border-radius:16px;padding:11px 14px;font-weight:800;cursor:pointer;transition:.18s;box-shadow:0 6px 16px rgba(47,80,110,.055)}.btn:hover,.tab:hover{transform:translateY(-1px);border-color:rgba(47,111,159,.38)}.btn.primary{background:linear-gradient(135deg,var(--primary),var(--primary2));border:0;color:white}.btn.ghost{background:transparent}.btn.danger{background:rgba(224,68,68,.1);border-color:rgba(224,68,68,.28);color:var(--bad)}.btn.good{background:rgba(17,163,106,.1);border-color:rgba(17,163,106,.28);color:var(--good)}.btn:disabled{opacity:.55;cursor:not-allowed;transform:none}.tab.active{background:linear-gradient(135deg,rgba(47,111,159,.10),rgba(95,159,200,.08));border-color:rgba(47,111,159,.34);color:var(--primary)}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);backdrop-filter:var(--glass)}.pad{padding:24px}.grid{display:grid;gap:18px}.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}.hero{padding:34px;display:grid;grid-template-columns:1.25fr .75fr;gap:22px;align-items:stretch}.hero h1{font-size:42px;line-height:1.03;margin:0 0 12px}.hero p{font-size:16px;line-height:1.55}.statRow{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}.stat{padding:16px;border-radius:20px;background:linear-gradient(135deg,rgba(47,111,159,.075),rgba(95,159,200,.045));border:1px solid var(--line)}.stat b{font-size:24px}.sectionCard{padding:22px;min-height:190px;position:relative;overflow:hidden}.sectionCard:after{content:"";position:absolute;width:160px;height:160px;border-radius:999px;background:linear-gradient(135deg,rgba(47,111,159,.11),rgba(95,159,200,.04));right:-50px;bottom:-50px}.sectionCard h3{font-size:21px;margin:0 0 8px}.progress{height:10px;background:rgba(99,117,143,.16);border-radius:99px;overflow:hidden}.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--primary),var(--primary2));border-radius:99px;transition:.3s}.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card2);padding:7px 10px;border-radius:999px;font-weight:800;font-size:12px;color:var(--muted)}
+    .authWrap{min-height:calc(100vh - 48px);display:grid;place-items:center}.authBox{width:min(980px,100%);display:grid;grid-template-columns:1fr 1fr;overflow:hidden}.authIntro{padding:42px;background:linear-gradient(145deg,#2f6f9f,#6fa8cf);color:white}.authIntro h1{font-size:40px;margin:18px 0 12px}.authForm{padding:34px}.form{display:grid;gap:13px}.input,select,textarea{width:100%;border:1px solid var(--line);background:var(--card2);color:var(--text);border-radius:16px;padding:13px 14px;outline:none;font:inherit}.input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(47,111,159,.10)}label{font-weight:850;font-size:13px;color:var(--muted)}textarea{min-height:100px;resize:vertical}.formRow{display:grid;grid-template-columns:1fr 1fr;gap:12px}.notice{padding:12px 14px;border-radius:16px;border:1px solid var(--line);background:rgba(47,111,159,.065);color:var(--muted)}.notice.bad{background:rgba(224,68,68,.08);border-color:rgba(224,68,68,.25);color:var(--bad)}.notice.good{background:rgba(17,163,106,.08);border-color:rgba(17,163,106,.25);color:var(--good)}
+    .screen{display:none}.screen.active{display:block}.qWrap{max-width:930px;margin:0 auto}.questionHead{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:14px}.timerBar{height:9px;background:rgba(99,117,143,.17);border-radius:99px;overflow:hidden}.timerBar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--primary),var(--primary2));transition:width .9s linear}.timerBar.danger i{background:linear-gradient(90deg,#ff3b3b,#ff9b9b);animation:pulse .65s infinite}@keyframes pulse{50%{opacity:.38}}.questionText{font-size:23px;font-weight:900;line-height:1.35}.answerList{display:grid;gap:10px;margin:18px 0}.answer{padding:14px 16px;border-radius:18px;border:1px solid var(--line);background:var(--card2);cursor:pointer;font-weight:750}.answer:hover{border-color:rgba(47,111,159,.38)}.answer.selected{border-color:var(--primary);box-shadow:0 0 0 4px rgba(47,111,159,.08)}.answer.correct{background:rgba(17,163,106,.12);border-color:rgba(17,163,106,.45)}.answer.wrong{background:rgba(224,68,68,.12);border-color:rgba(224,68,68,.45)}.matchGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.matchRow{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:center}.imgQ{max-width:100%;border-radius:18px;border:1px solid var(--line);margin-top:12px}.resultBig{text-align:center;padding:32px}.scoreCircle{width:160px;height:160px;border-radius:50%;display:grid;place-items:center;margin:0 auto 16px;background:conic-gradient(var(--primary) var(--pct),rgba(99,117,143,.14) 0);position:relative}.scoreCircle:after{content:"";position:absolute;inset:13px;background:var(--card);border-radius:50%}.scoreCircle b{position:relative;z-index:1;font-size:32px}.bankCard{padding:18px;border-radius:20px;border:1px solid var(--line);background:var(--card2)}.bankCard h4{margin:0 0 8px}.adminSplit{display:grid;grid-template-columns:290px 1fr;gap:18px}.side{padding:16px;display:grid;gap:8px;height:max-content}.adminPanel{display:none}.adminPanel.active{display:block}.chipbar{display:flex;gap:8px;flex-wrap:wrap}.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:20px;background:var(--card2)}
+    @media(max-width:900px){.grid2,.grid3,.hero,.authBox,.adminSplit{grid-template-columns:1fr}.hero h1{font-size:32px}.statRow{grid-template-columns:1fr}.topbar{align-items:flex-start;gap:14px;flex-direction:column}.nav{width:100%}.btn,.tab{flex:1}.formRow{grid-template-columns:1fr}.matchGrid,.matchRow{grid-template-columns:1fr}.app{padding:14px}.authWrap{min-height:auto}.authIntro{padding:28px}.authForm{padding:24px}}
+  </style>
+</head>
+<body>
+  <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+  <div class="app">
+    <section id="authScreen" class="authWrap">
+      <div class="card authBox">
+        <div class="authIntro">
+          <div class="logo"><div class="logoMark">⚕</div><div>BioTest Medical</div></div>
+          <h1>Медицинская платформа по биохимии</h1>
+          <p>НАРЕШКА, тестирование, банк заданий, работа над ошибками, личный прогресс и админ-панель для управления вопросами.</p>
+          <div class="notice" style="background:rgba(255,255,255,.18);color:white;border-color:rgba(255,255,255,.28)">Если Supabase ещё не подключён, приложение работает в демо-режиме.</div>
+        </div>
+        <div class="authForm">
+          <div class="chipbar" style="margin-bottom:18px"><button class="tab active" id="loginTab" onclick="setAuthMode('login')">Вход</button><button class="tab" id="registerTab" onclick="setAuthMode('register')">Регистрация</button></div>
+          <div id="authMsg"></div>
+          <form id="loginForm" class="form" onsubmit="login(event)">
+            <label>Email<input class="input" id="loginEmail" type="email" autocomplete="email" required></label>
+            <label>Пароль<input class="input" id="loginPassword" type="password" autocomplete="current-password" required></label>
+            <button class="btn primary" type="submit">Войти</button>
+            <button class="btn ghost" type="button" onclick="demoLogin()">Войти в демо</button>
+          </form>
+          <form id="registerForm" class="form hidden" onsubmit="register(event)">
+            <label>ФИО<input class="input" id="regName" required placeholder="Иванов Иван Иванович"></label>
+            <label>Группа<input class="input" id="regGroup" required placeholder="Н-12"></label>
+            <label>Email<input class="input" id="regEmail" type="email" required></label>
+            <label>Пароль<input class="input" id="regPassword" type="password" minlength="6" required></label>
+            <label>Общий код доступа<input class="input" id="regCode" required placeholder="Например: BIO2026"></label>
+            <button class="btn primary" type="submit">Зарегистрироваться</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <main id="mainApp" class="hidden">
+      <header class="topbar">
+        <div class="logo"><div class="logoMark">⚕</div><div><div>BioTest Medical</div><div class="tiny soft" id="userLine">Студент</div></div></div>
+        <nav class="nav">
+          <button class="tab active" onclick="showScreen('dashboard')">Главная</button>
+          <button class="tab" onclick="showScreen('testing')">Тестирование</button>
+          <button class="tab" onclick="showScreen('bank')">Банк</button>
+          <button class="tab" onclick="showScreen('mistakes')">Ошибки</button>
+          <button class="tab" onclick="showScreen('profile')">👤 Кабинет</button>
+          <button class="tab hidden" id="adminNav" onclick="showScreen('admin')">Управление</button>
+          <button class="btn ghost" onclick="toggleTheme()">◐</button>
+          <button class="btn danger" onclick="logout()">Выйти</button>
+        </nav>
+      </header>
+
+      <section id="dashboard" class="screen active">
+        <div class="card hero">
+          <div>
+            <span class="pill">Академическая платформа • Биохимия</span>
+            <h1>Добро пожаловать, <span id="helloName">студент</span></h1>
+            <p class="soft">Выбирай раздел, проходи НАРЕШКУ до правильного ответа, закрепляй тему тестированием и смотри эталоны в банке заданий.</p>
+            <div class="statRow">
+              <div class="stat"><div class="soft tiny">Пройдено</div><b id="statPassed">0</b></div>
+              <div class="stat"><div class="soft tiny">Ошибок</div><b id="statWrong">0</b></div>
+              <div class="stat"><div class="soft tiny">Правильность</div><b id="statPercent">0%</b></div>
+            </div>
+          </div>
+          <div class="card pad" style="box-shadow:none">
+            <h3 style="margin-top:0">Быстрый старт</h3>
+            <p class="soft">Тестирование — 15 случайных вопросов. НАРЕШКА — 5, 10 или весь раздел с эталонами после ответа.</p>
+            <div class="grid"><button class="btn primary" onclick="showScreen('testing')">Начать обучение</button><button class="btn" onclick="showScreen('bank')">Открыть банк заданий</button></div>
+          </div>
+        </div>
+        <h2>Разделы</h2>
+        <div id="sectionCards" class="grid grid3"></div>
+      </section>
+
+      <section id="testing" class="screen">
+        <div class="card pad">
+          <h2 style="margin-top:0">Выбор раздела</h2>
+          <p class="soft">В каждом разделе доступны два режима: НАРЕШКА и ТЕСТИРОВАНИЕ.</p>
+          <div id="testSectionList" class="grid grid3"></div>
+        </div>
+      </section>
+
+      <section id="modeScreen" class="screen">
+        <button class="btn ghost" onclick="showScreen('testing')">← Назад</button>
+        <div class="card pad" style="margin-top:14px">
+          <h2 id="modeTitle">Раздел</h2>
+          <div class="grid grid2">
+            <div class="bankCard"><h3>НАРЕШКА</h3><p class="soft">Эталоны после каждого ответа. Ошибки повторяются до правильного решения.</p><div class="chipbar"><button class="btn primary" onclick="startPractice(5)">5 вопросов</button><button class="btn primary" onclick="startPractice(10)">10 вопросов</button><button class="btn primary" onclick="startPractice('all')">Весь раздел</button></div></div>
+            <div class="bankCard"><h3>ТЕСТИРОВАНИЕ</h3><p class="soft">15 случайных вопросов без подсказок. Результат и разбор — в конце.</p><button class="btn primary" onclick="startTest()">Начать тест</button></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="quizScreen" class="screen">
+        <div class="qWrap">
+          <div class="questionHead"><button class="btn ghost" onclick="stopQuiz()">← Завершить</button><div class="pill" id="quizMeta">Вопрос</div><div class="pill" id="timerText">40 сек</div></div>
+          <div class="timerBar" id="timerBar"><i></i></div>
+          <div class="card pad" style="margin-top:14px">
+            <div class="questionText" id="questionText"></div>
+            <img id="questionImage" class="imgQ hidden" alt="Изображение к вопросу" />
+            <div id="answerArea"></div>
+            <div id="feedback" class="hidden"></div>
+            <div class="chipbar"><button id="answerBtn" class="btn primary" onclick="submitAnswer()">Ответить</button><button id="nextBtn" class="btn primary hidden" onclick="nextQuestion()">Продолжить</button></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="resultScreen" class="screen"><div class="card resultBig"><div class="scoreCircle" id="scoreCircle" style="--pct:0%"><b id="scoreText">0%</b></div><h2 id="resultTitle">Результат</h2><p class="soft" id="resultSub"></p><div id="resultHistory" class="grid" style="text-align:left;margin-top:22px"></div><div class="chipbar" style="justify-content:center;margin-top:22px"><button class="btn primary" onclick="showScreen('testing')">К разделам</button><button class="btn" onclick="showScreen('mistakes')">Работа над ошибками</button></div></div></section>
+
+      <section id="bank" class="screen">
+        <div class="card pad">
+          <h2 style="margin-top:0">Банк заданий</h2>
+          <div class="formRow"><input class="input" id="bankSearch" oninput="renderBank()" placeholder="Поиск по вопросам"><select id="bankSection" onchange="renderBank()"></select></div>
+          <div class="chipbar" style="margin:14px 0"><button class="tab active" data-filter="all" onclick="setBankFilter('all')">Все</button><button class="tab" data-filter="unpassed" onclick="setBankFilter('unpassed')">Непройденные</button><button class="tab" data-filter="wrong" onclick="setBankFilter('wrong')">Ошибки</button><button class="tab" data-filter="passed" onclick="setBankFilter('passed')">Пройденные</button><button class="tab" data-filter="fav" onclick="setBankFilter('fav')">Избранные</button></div>
+          <div id="bankList" class="grid"></div>
+        </div>
+      </section>
+
+      <section id="mistakes" class="screen"><div class="card pad"><h2 style="margin-top:0">Работа над ошибками</h2><p class="soft">Здесь собираются вопросы, где была ошибка.</p><div id="mistakeList" class="grid"></div></div></section>
+
+      <section id="profile" class="screen"><div class="grid grid2"><div class="card pad"><h2 style="margin-top:0">Личный кабинет</h2><div id="profileBox"></div></div><div class="card pad"><h2 style="margin-top:0">История попыток</h2><div id="attemptList" class="grid"></div></div></div></section>
+
+      <section id="admin" class="screen">
+        <div class="adminSplit">
+          <aside class="card side"><button class="tab active" onclick="showAdmin('questions')">Вопросы</button><button class="tab" onclick="showAdmin('sections')">Разделы</button><button class="tab" onclick="showAdmin('codes')">Коды доступа</button><button class="tab" onclick="showAdmin('students')">Студенты</button><button class="tab" onclick="showAdmin('bans')">Бан-лист</button></aside>
+          <div class="card pad">
+            <div id="adminQuestions" class="adminPanel active"><h2 style="margin-top:0">Добавить вопрос</h2><form class="form" onsubmit="adminAddQuestion(event)"><div class="formRow"><label>Раздел<select id="admQSection"></select></label><label>Тип<select id="admQType"><option value="single_choice">Один ответ</option><option value="multiple_choice">Несколько ответов</option><option value="matching">Соответствие</option><option value="image_single_choice">Картинка + один ответ</option><option value="image_multiple_choice">Картинка + несколько ответов</option></select></label></div><label>Текст вопроса<textarea id="admQText" required></textarea></label><label>Ссылка на картинку GitHub<input class="input" id="admQImage" placeholder="images/name.jpg или https://..."></label><label>Варианты ответа или пары соответствия<textarea id="admQAnswers" placeholder="Для выбора: *правильный ответ&#10;неправильный ответ&#10;*ещё правильный&#10;&#10;Для соответствия: фермент = продукт"></textarea></label><label>Эталонный ответ<textarea id="admQExpl" required></textarea></label><button class="btn primary" type="submit">Сохранить вопрос</button></form><h3>Список вопросов</h3><div id="adminQuestionList" class="grid"></div></div>
+            <div id="adminSections" class="adminPanel"><h2 style="margin-top:0">Разделы</h2><form class="form" onsubmit="adminAddSection(event)"><div class="formRow"><input class="input" id="admSecCode" placeholder="Код, например LO1" required><input class="input" id="admSecTitle" placeholder="Название раздела" required></div><textarea id="admSecDesc" placeholder="Описание"></textarea><button class="btn primary">Добавить раздел</button></form><div id="adminSectionList" class="grid" style="margin-top:16px"></div></div>
+            <div id="adminCodes" class="adminPanel"><h2 style="margin-top:0">Общий код доступа</h2><form class="form" onsubmit="adminAddCode(event)"><input class="input" id="admCode" placeholder="Новый код, например BIO2026" required><button class="btn primary">Создать активный код</button></form><div id="adminCodeList" class="grid" style="margin-top:16px"></div></div>
+            <div id="adminStudents" class="adminPanel"><h2 style="margin-top:0">Студенты</h2><div id="adminStudentList" class="grid"></div></div>
+            <div id="adminBans" class="adminPanel"><h2 style="margin-top:0">Бан-лист</h2><div id="adminBanList" class="grid"></div></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+// ====== НАСТРОЙКИ SUPABASE ======
+const SUPABASE_URL = 'https://rgpcweatksdtiaurzypo.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_OUT-dJAuWnixhB0JrBC8mw_aoZM6A15';
+const sbReady = SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY.length > 20;
+const supa = sbReady ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+const demoSections = [
+  {id:'demo-eo2', code:'EO2', title:'Энергетический обмен 2', description:'ЦТК, ПДК, коферменты, регуляция.', sort_order:1},
+  {id:'demo-uo1', code:'UO1', title:'Углеводный обмен 1', description:'Гликолиз и обмен глюкозы.', sort_order:2},
+  {id:'demo-uo2', code:'UO2', title:'Углеводный обмен 2', description:'Продолжение углеводного обмена.', sort_order:3}
+];
+const demoQuestions = [
+  {id:'q1', section_id:'demo-eo2', question_text:'Установите соответствие: фермент → продукт реакции.', question_type:'matching', explanation:'Цитратсинтаза → цитрат; сукцинатдегидрогеназа → фумарат; малатдегидрогеназа → оксалоацетат.', time_limit:40, pairs:[{left_text:'Цитратсинтаза',right_text:'Цитрат'},{left_text:'Сукцинатдегидрогеназа',right_text:'Фумарат'},{left_text:'Малатдегидрогеназа',right_text:'Оксалоацетат'}], answers:[]},
+  {id:'q2', section_id:'demo-eo2', question_text:'FAD является коферментом следующих ферментов:', question_type:'multiple_choice', explanation:'FAD входит в состав сукцинатдегидрогеназы и дигидролипоилдегидрогеназы.', time_limit:40, answers:[{answer_text:'Сукцинатдегидрогеназа',is_correct:true},{answer_text:'Малатдегидрогеназа',is_correct:false},{answer_text:'Изоцитратдегидрогеназа',is_correct:false},{answer_text:'Дигидролипоилдегидрогеназа',is_correct:true}], pairs:[]},
+  {id:'q3', section_id:'demo-uo1', question_text:'Какие реакции гликолиза являются необратимыми?', question_type:'multiple_choice', explanation:'Гексокиназа/глюкокиназа, ФФК-1 и пируваткиназа катализируют необратимые реакции гликолиза.', time_limit:40, answers:[{answer_text:'Гексокиназная реакция',is_correct:true},{answer_text:'Фосфофруктокиназная реакция',is_correct:true},{answer_text:'Пируваткиназная реакция',is_correct:true},{answer_text:'Фосфоглицераткиназная реакция',is_correct:false}], pairs:[]},
+  {id:'q4', section_id:'demo-uo2', question_text:'Основной запасной углевод животных клеток:', question_type:'single_choice', explanation:'Гликоген — основной запасной полисахарид животных и человека.', time_limit:40, answers:[{answer_text:'Гликоген',is_correct:true},{answer_text:'Крахмал',is_correct:false},{answer_text:'Целлюлоза',is_correct:false},{answer_text:'Лактоза',is_correct:false}], pairs:[]}
+];
+let state = {user:null, profile:null, sections:[], questions:[], progress:[], favorites:[], attempts:[], selectedSection:null, quiz:null, bankFilter:'all', adminTab:'questions'};
+let timerInt = null;
+
+function $(id){return document.getElementById(id)}
+function msg(text,type='notice'){ $('authMsg').innerHTML = `<div class="notice ${type}">${text}</div>`; }
+function shuffle(a){return [...a].sort(()=>Math.random()-0.5)}
+function secById(id){return state.sections.find(s=>s.id===id)}
+function qById(id){return state.questions.find(q=>q.id===id)}
+function isPassed(qid,mode){return state.progress.some(p=>p.question_id===qid && p.mode===mode && p.status==='passed')}
+function isWrong(qid){return state.progress.some(p=>p.question_id===qid && p.status==='wrong')}
+function isFav(qid){return state.favorites.some(f=>f.question_id===qid)}
+function correctTexts(q){ if(q.question_type==='matching') return q.pairs.map(p=>`${p.left_text} → ${p.right_text}`).join('; '); return q.answers.filter(a=>a.is_correct).map(a=>a.answer_text).join('; '); }
+
+function setAuthMode(mode){$('loginTab').classList.toggle('active',mode==='login');$('registerTab').classList.toggle('active',mode==='register');$('loginForm').classList.toggle('hidden',mode!=='login');$('registerForm').classList.toggle('hidden',mode!=='register');$('authMsg').innerHTML='';}
+async function login(e){e.preventDefault(); const email=$('loginEmail').value.trim(), password=$('loginPassword').value; if(!sbReady){demoLogin(email);return} const {data,error}=await supa.auth.signInWithPassword({email,password}); if(error) return msg(error.message,'bad'); await boot(data.user);}
+async function register(e){e.preventDefault(); const full_name=$('regName').value.trim(), group_name=$('regGroup').value.trim(), email=$('regEmail').value.trim().toLowerCase(), password=$('regPassword').value, code=$('regCode').value.trim();
+  if(!sbReady){ if(code!=='BIO2026') return msg('Доступ заблокирован. Обратитесь к составителю приложения.','bad'); state.profile={id:'demo',email,full_name,group_name,role:'student'}; state.user={id:'demo',email}; await boot(state.user); return; }
+  const {data:okData,error:okErr}=await supa.rpc('verify_access_code',{p_email:email,p_code:code}); if(okErr) return msg('Ошибка проверки кода: '+okErr.message,'bad'); if(!okData) return msg('Доступ заблокирован. Обратитесь к составителю приложения.','bad');
+  const {data,error}=await supa.auth.signUp({email,password}); if(error) return msg(error.message,'bad'); const uid=data.user?.id; if(uid){ await supa.from('profiles').insert({id:uid,email,full_name,group_name,role:'student'}); }
+  msg('Регистрация выполнена. Если Supabase просит подтверждение email, подтвердите почту и войдите.','good'); setAuthMode('login');
+}
+function demoLogin(email='demo@biotest.local'){state.user={id:'demo-user',email};state.profile={id:'demo-user',email,full_name:'Демо Студент',group_name:'Н-12',role:'admin'};boot(state.user)}
+async function logout(){ if(sbReady) await supa.auth.signOut(); state.user=null; $('mainApp').classList.add('hidden'); $('authScreen').classList.remove('hidden'); }
+async function boot(user){ state.user=user; $('authScreen').classList.add('hidden'); $('mainApp').classList.remove('hidden'); await loadAll(); renderAll(); }
+
+async function loadAll(){
+  if(!sbReady){ state.sections=demoSections; state.questions=demoQuestions; state.progress=JSON.parse(localStorage.bt_progress||'[]'); state.favorites=JSON.parse(localStorage.bt_fav||'[]'); state.attempts=JSON.parse(localStorage.bt_attempts||'[]'); return; }
+  const {data:{user}}=await supa.auth.getUser(); state.user=user;
+  let p=await supa.from('profiles').select('*').eq('id',user.id).single(); state.profile=p.data || {id:user.id,email:user.email,full_name:user.email,group_name:'',role:'student'};
+  const [secs,qs,prog,fav,atts]=await Promise.all([
+    supa.from('sections').select('*').eq('is_active',true).order('sort_order'),
+    supa.from('questions').select('*, answers(*), match_pairs(*)').eq('is_active',true).order('sort_order'),
+    supa.from('student_progress').select('*').eq('user_id',user.id),
+    supa.from('favorites').select('*').eq('user_id',user.id),
+    supa.from('test_attempts').select('*').eq('user_id',user.id).order('started_at',{ascending:false}).limit(25)
+  ]);
+  state.sections=secs.data||[]; state.questions=(qs.data||[]).map(q=>({...q, answers:q.answers||[], pairs:q.match_pairs||[]})); state.progress=prog.data||[]; state.favorites=fav.data||[]; state.attempts=atts.data||[];
+}
+function persistLocal(){localStorage.bt_progress=JSON.stringify(state.progress);localStorage.bt_fav=JSON.stringify(state.favorites);localStorage.bt_attempts=JSON.stringify(state.attempts);}
+function renderAll(){ renderTop(); renderSections(); renderBankSelectors(); renderBank(); renderMistakes(); renderProfile(); renderAdmin(); }
+function renderTop(){const p=state.profile||{}; $('userLine').textContent=`${p.full_name||state.user?.email||'Студент'} • ${p.group_name||''}`; $('helloName').textContent=(p.full_name||'студент').split(' ')[0]; $('adminNav').classList.toggle('hidden',p.role!=='admin'); const passed=state.progress.filter(p=>p.status==='passed').length, wrong=state.progress.reduce((s,p)=>s+(p.wrong_count||0),0), total=passed+wrong; $('statPassed').textContent=passed; $('statWrong').textContent=wrong; $('statPercent').textContent=total?Math.round(passed/total*100)+'%':'0%';}
+function renderSections(){ const html=state.sections.map(s=>{const qs=state.questions.filter(q=>q.section_id===s.id);const passed=qs.filter(q=>isPassed(q.id,'test')||isPassed(q.id,'practice')).length;const pct=qs.length?Math.round(passed/qs.length*100):0;return `<div class="card sectionCard"><span class="pill">${s.code}</span><h3>${s.title}</h3><p class="soft">${s.description||'Учебный раздел'}</p><div class="progress"><i style="width:${pct}%"></i></div><p class="soft tiny">Пройдено: ${passed}/${qs.length}</p><button class="btn primary" onclick="openSection('${s.id}')">Открыть</button></div>`}).join(''); $('sectionCards').innerHTML=html||'<div class="empty">Разделов пока нет</div>'; $('testSectionList').innerHTML=html||'<div class="empty">Разделов пока нет</div>'; }
+function openSection(id){state.selectedSection=id; $('modeTitle').textContent=secById(id)?.title||'Раздел'; showScreen('modeScreen');}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('.topbar .tab').forEach(t=>t.classList.remove('active'));renderAll();}
+function toggleTheme(){const next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;localStorage.bt_theme=next;}
+if(localStorage.bt_theme) document.documentElement.dataset.theme=localStorage.bt_theme;
+
+function eligibleQuestions(mode){let qs=state.questions.filter(q=>q.section_id===state.selectedSection); if(mode==='practice') qs=qs.filter(q=>!isPassed(q.id,'practice')); if(mode==='test') qs=qs.filter(q=>!isPassed(q.id,'test')); return qs;}
+function startPractice(n){let qs=eligibleQuestions('practice'); if(!qs.length) return allDone(); qs=shuffle(qs); if(n!=='all') qs=qs.slice(0,n); state.quiz={mode:'practice', queue:qs, current:null, index:0, answers:[], started:Date.now(), awaiting:false}; showScreen('quizScreen'); nextQuestion();}
+function startTest(){let qs=eligibleQuestions('test'); if(!qs.length) return allDone(); qs=shuffle(qs).slice(0,15); state.quiz={mode:'test', queue:qs, current:null, index:0, answers:[], started:Date.now(), awaiting:false}; showScreen('quizScreen'); nextQuestion();}
+function allDone(){alert('Все задания пройдены. Начать заново?'); if(confirm('Сбросить прогресс этого раздела?')){ state.progress=state.progress.filter(p=>p.section_id!==state.selectedSection); persistLocal(); renderAll(); }}
+function stopQuiz(){clearInterval(timerInt); showScreen('testing')}
+function nextQuestion(){clearInterval(timerInt); $('feedback').classList.add('hidden'); $('nextBtn').classList.add('hidden'); $('answerBtn').classList.remove('hidden'); const quiz=state.quiz; if(!quiz.queue.length) return finishQuiz(); quiz.current=quiz.queue.shift(); quiz.index++; quiz.awaiting=false; renderQuestion(); startTimer(quiz.current.time_limit||40);}
+function renderQuestion(){const q=state.quiz.current; $('quizMeta').textContent=`${state.quiz.mode==='practice'?'НАРЕШКА':'Тестирование'} • вопрос ${state.quiz.index}${state.quiz.mode==='test'?' / '+(state.quiz.answers.length+state.quiz.queue.length+1):''}`; $('questionText').textContent=q.question_text; $('questionImage').classList.toggle('hidden',!q.image_url); if(q.image_url) $('questionImage').src=q.image_url; const area=$('answerArea'); if(q.question_type==='matching'){ const rights=shuffle(q.pairs.map(p=>p.right_text)); area.innerHTML=`<div class="answerList">${q.pairs.map((p,i)=>`<div class="matchRow"><div class="answer">${p.left_text}</div><select class="matchSelect" data-left="${p.left_text.replaceAll('"','&quot;')}"><option value="">Выберите...</option>${rights.map(r=>`<option value="${r.replaceAll('"','&quot;')}">${r}</option>`).join('')}</select></div>`).join('')}</div>`; } else { area.innerHTML=`<div class="answerList">${q.answers.map((a,i)=>`<div class="answer" data-idx="${i}" onclick="toggleAnswer(${i})">${a.answer_text}</div>`).join('')}</div>`; }}
+function toggleAnswer(i){const q=state.quiz.current; const multi=q.question_type.includes('multiple'); const el=document.querySelector(`.answer[data-idx="${i}"]`); if(!multi) document.querySelectorAll('.answer[data-idx]').forEach(x=>x.classList.remove('selected')); el.classList.toggle('selected');}
+function collectAnswer(){const q=state.quiz.current; if(q.question_type==='matching'){return [...document.querySelectorAll('.matchSelect')].map(s=>({left:s.dataset.left,right:s.value}));} return [...document.querySelectorAll('.answer.selected')].map(e=>Number(e.dataset.idx));}
+function checkAnswer(ans){const q=state.quiz.current; if(q.question_type==='matching') return q.pairs.every(p=>ans.find(a=>a.left===p.left_text)?.right===p.right_text); const correct=q.answers.map((a,i)=>a.is_correct?i:null).filter(x=>x!==null).sort().join(','); return ans.sort().join(',')===correct;}
+function startTimer(seconds){let left=seconds; updateTimer(left,seconds); timerInt=setInterval(()=>{left--; updateTimer(left,seconds); if(left<=0){clearInterval(timerInt); submitAnswer(true)}},1000)}
+function updateTimer(left,total){$('timerText').textContent=left+' сек'; $('timerBar').querySelector('i').style.width=Math.max(0,left/total*100)+'%'; $('timerBar').classList.toggle('danger',left<=10);}
+async function submitAnswer(timeout=false){if(state.quiz.awaiting) return; clearInterval(timerInt); state.quiz.awaiting=true; const q=state.quiz.current, ans=timeout?[]:collectAnswer(); const ok=checkAnswer(ans); const spent=(q.time_limit||40)-parseInt($('timerText').textContent)||0; state.quiz.answers.push({question:q, answer:ans, ok, timeout, time_spent:spent}); await markProgress(q, ok, state.quiz.mode); if(state.quiz.mode==='practice'){ showFeedback(q,ans,ok,timeout); if(!ok) state.quiz.queue.splice(Math.min(2,state.quiz.queue.length),0,q); $('answerBtn').classList.add('hidden'); $('nextBtn').classList.remove('hidden'); } else { $('answerBtn').classList.add('hidden'); setTimeout(nextQuestion,350); }}
+function showFeedback(q,ans,ok,timeout){ if(q.question_type==='matching'){ document.querySelectorAll('.matchSelect').forEach(s=>{const right=q.pairs.find(p=>p.left_text===s.dataset.left)?.right_text; s.style.borderColor=s.value===right?'var(--good)':'var(--bad)';}); } else {document.querySelectorAll('.answer[data-idx]').forEach(e=>{const i=Number(e.dataset.idx), a=q.answers[i]; if(a.is_correct)e.classList.add('correct'); if(e.classList.contains('selected')&&!a.is_correct)e.classList.add('wrong');});}
+  $('feedback').className='notice '+(ok?'good':'bad'); $('feedback').innerHTML=`<b>${ok?'Верно':'Неверно'}${timeout?' — время вышло':''}</b><br><br><b>Правильный ответ / эталон:</b><br>${q.explanation||correctTexts(q)}`; $('feedback').classList.remove('hidden');}
+async function markProgress(q,ok,mode){const existing=state.progress.find(p=>p.question_id===q.id&&p.mode===mode); const item={user_id:state.user.id,section_id:q.section_id,question_id:q.id,mode,status:ok?'passed':'wrong',correct_count:(existing?.correct_count||0)+(ok?1:0),wrong_count:(existing?.wrong_count||0)+(ok?0:1),last_answered_at:new Date().toISOString()}; if(existing) Object.assign(existing,item); else state.progress.push(item); if(sbReady) await supa.from('student_progress').upsert(item,{onConflict:'user_id,question_id,mode'}); else persistLocal(); renderTop();}
+async function finishQuiz(){clearInterval(timerInt); const a=state.quiz.answers, correct=a.filter(x=>x.ok).length, total=a.length, pct=total?Math.round(correct/total*100):0; const attempt={id:'att-'+Date.now(),user_id:state.user.id,section_id:state.selectedSection,mode:state.quiz.mode,score:pct,total_questions:total,correct_count:correct,wrong_count:total-correct,started_at:new Date(state.quiz.started).toISOString(),finished_at:new Date().toISOString()}; state.attempts.unshift(attempt); if(sbReady){const {data}=await supa.from('test_attempts').insert(attempt).select().single(); if(data){await supa.from('test_attempt_answers').insert(a.map(x=>({attempt_id:data.id,question_id:x.question.id,user_answer:x.answer,is_correct:x.ok,time_spent:x.time_spent||0})));}} else persistLocal(); $('scoreCircle').style.setProperty('--pct',pct+'%'); $('scoreText').textContent=pct+'%'; $('resultTitle').textContent=state.quiz.mode==='practice'?'НАРЕШКА завершена':'Тест завершён'; $('resultSub').textContent=`Правильно: ${correct}/${total}. Ошибок: ${total-correct}.`; $('resultHistory').innerHTML=a.map((x,i)=>`<div class="bankCard"><b>${i+1}. ${x.question.question_text}</b><p class="soft">${x.ok?'✅ Верно':'❌ Ошибка'}${x.timeout?' • время вышло':''}</p><p><b>Эталон:</b> ${x.question.explanation||correctTexts(x.question)}</p></div>`).join(''); showScreen('resultScreen');}
+
+function renderBankSelectors(){const opts='<option value="all">Все разделы</option>'+state.sections.map(s=>`<option value="${s.id}">${s.code} — ${s.title}</option>`).join(''); if($('bankSection')) $('bankSection').innerHTML=opts; if($('admQSection')) $('admQSection').innerHTML=state.sections.map(s=>`<option value="${s.id}">${s.code} — ${s.title}</option>`).join('');}
+function setBankFilter(f){state.bankFilter=f;document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b.dataset.filter===f));renderBank();}
+function renderBank(){if(!$('bankList'))return; const search=($('bankSearch')?.value||'').toLowerCase(), sec=$('bankSection')?.value||'all'; let qs=state.questions.filter(q=>(sec==='all'||q.section_id===sec) && q.question_text.toLowerCase().includes(search)); const f=state.bankFilter; if(f==='unpassed') qs=qs.filter(q=>!isPassed(q.id,'practice')&&!isPassed(q.id,'test')); if(f==='wrong') qs=qs.filter(q=>isWrong(q.id)); if(f==='passed') qs=qs.filter(q=>isPassed(q.id,'practice')||isPassed(q.id,'test')); if(f==='fav') qs=qs.filter(q=>isFav(q.id)); $('bankList').innerHTML=qs.map(bankCard).join('')||'<div class="empty">Ничего не найдено</div>';}
+function bankCard(q){return `<div class="bankCard"><div class="chipbar"><span class="pill">${secById(q.section_id)?.code||''}</span><span class="pill">${q.question_type}</span><button class="btn ghost" onclick="toggleFav('${q.id}')">${isFav(q.id)?'★ В избранном':'☆ В избранное'}</button></div><h4>${q.question_text}</h4>${q.image_url?`<img class="imgQ" src="${q.image_url}">`:''}<p><b>Правильный ответ / эталон:</b> ${q.explanation||correctTexts(q)}</p></div>`}
+async function toggleFav(qid){const f=state.favorites.find(x=>x.question_id===qid); if(f){state.favorites=state.favorites.filter(x=>x.question_id!==qid); if(sbReady) await supa.from('favorites').delete().eq('user_id',state.user.id).eq('question_id',qid);} else {const item={user_id:state.user.id,question_id:qid}; state.favorites.push(item); if(sbReady) await supa.from('favorites').insert(item);} persistLocal(); renderBank();}
+function renderMistakes(){const qs=state.questions.filter(q=>isWrong(q.id)); $('mistakeList').innerHTML=qs.map(bankCard).join('')||'<div class="empty">Ошибок пока нет</div>';}
+function renderProfile(){const p=state.profile||{}; $('profileBox').innerHTML=`<p><b>ФИО:</b> ${p.full_name||''}</p><p><b>Группа:</b> ${p.group_name||''}</p><p><b>Email:</b> ${p.email||state.user?.email||''}</p><p><b>Роль:</b> ${p.role||'student'}</p><button class="btn danger" onclick="resetOwnProgress()">Сбросить мой прогресс</button>`; $('attemptList').innerHTML=state.attempts.map(a=>`<div class="bankCard"><b>${secById(a.section_id)?.title||'Раздел'}</b><p class="soft">${a.mode} • ${new Date(a.finished_at||a.started_at).toLocaleString()}</p><p>Результат: <b>${a.correct_count}/${a.total_questions}</b> (${a.score}%)</p></div>`).join('')||'<div class="empty">Попыток пока нет</div>';}
+async function resetOwnProgress(){if(!confirm('Сбросить весь свой прогресс?'))return; state.progress=[]; state.attempts=[]; if(sbReady){await supa.from('student_progress').delete().eq('user_id',state.user.id); await supa.from('test_attempts').delete().eq('user_id',state.user.id);} else persistLocal(); renderAll();}
+
+function showAdmin(tab){state.adminTab=tab;document.querySelectorAll('.adminPanel').forEach(p=>p.classList.remove('active'));$('admin'+tab[0].toUpperCase()+tab.slice(1)).classList.add('active');document.querySelectorAll('.side .tab').forEach(b=>b.classList.remove('active'));event.target.classList.add('active');renderAdmin();}
+function renderAdmin(){ if(state.profile?.role!=='admin') return; renderBankSelectors(); $('adminQuestionList').innerHTML=state.questions.map(q=>`<div class="bankCard"><b>${secById(q.section_id)?.code} • ${q.question_text}</b><p class="soft">${q.question_type}</p></div>`).join('')||'<div class="empty">Вопросов нет</div>'; $('adminSectionList').innerHTML=state.sections.map(s=>`<div class="bankCard"><b>${s.code}</b> — ${s.title}</div>`).join(''); if(sbReady) loadAdminRemote(); else {$('adminCodeList').innerHTML='<div class="notice">Демо-код: BIO2026</div>'; $('adminStudentList').innerHTML='<div class="notice">Демо Студент • Н-12 • admin</div>'; $('adminBanList').innerHTML='<div class="empty">Бан-лист доступен после подключения Supabase</div>';}}
+async function loadAdminRemote(){const [codes,students,bans]=await Promise.all([supa.from('access_codes').select('*').order('created_at',{ascending:false}),supa.from('profiles').select('*').order('created_at',{ascending:false}),supa.from('banned_emails').select('*').eq('is_active',true).order('created_at',{ascending:false})]); $('adminCodeList').innerHTML=(codes.data||[]).map(c=>`<div class="bankCard"><b>${c.code}</b><p class="soft">${c.is_active?'активен':'выключен'}</p></div>`).join('')||'<div class="empty">Кодов нет</div>'; $('adminStudentList').innerHTML=(students.data||[]).map(s=>`<div class="bankCard"><b>${s.full_name}</b><p>${s.group_name} • ${s.email} • ${s.role}</p></div>`).join('')||'<div class="empty">Студентов нет</div>'; $('adminBanList').innerHTML=(bans.data||[]).map(b=>`<div class="bankCard"><b>${b.email}</b><p class="soft">${b.reason}</p><button class="btn good" onclick="unban('${b.email}')">Разблокировать</button></div>`).join('')||'<div class="empty">Бан-лист пуст</div>';}
+async function adminAddQuestion(e){e.preventDefault(); const section_id=$('admQSection').value, question_type=$('admQType').value, question_text=$('admQText').value.trim(), image_url=$('admQImage').value.trim()||null, explanation=$('admQExpl').value.trim(); const lines=$('admQAnswers').value.split('\n').map(x=>x.trim()).filter(Boolean); let q={id:'q-'+Date.now(),section_id,question_text,question_type,image_url,explanation,time_limit:40,answers:[],pairs:[]}; if(question_type==='matching') q.pairs=lines.map((l,i)=>{const [left,right]=l.split('=').map(x=>(x||'').trim());return{left_text:left,right_text:right,sort_order:i}}).filter(p=>p.left_text&&p.right_text); else q.answers=lines.map((l,i)=>({answer_text:l.replace(/^\*/,''),is_correct:l.startsWith('*'),sort_order:i})); if(sbReady){const {data,error}=await supa.from('questions').insert({section_id,question_text,question_type,image_url,explanation,time_limit:40}).select().single(); if(error)return alert(error.message); if(q.answers.length) await supa.from('answers').insert(q.answers.map(a=>({...a,question_id:data.id}))); if(q.pairs.length) await supa.from('match_pairs').insert(q.pairs.map(p=>({...p,question_id:data.id}))); await loadAll();} else state.questions.push(q); e.target.reset(); renderAll(); alert('Вопрос сохранён');}
+async function adminAddSection(e){e.preventDefault(); const s={id:'sec-'+Date.now(),code:$('admSecCode').value.trim(),title:$('admSecTitle').value.trim(),description:$('admSecDesc').value.trim(),sort_order:state.sections.length+1,is_active:true}; if(sbReady){await supa.from('sections').insert(s); await loadAll();} else state.sections.push(s); e.target.reset(); renderAll();}
+async function adminAddCode(e){e.preventDefault(); const code=$('admCode').value.trim(); if(sbReady){await supa.from('access_codes').insert({code,title:'Создан из админки',is_active:true}); renderAdmin();} else alert('В демо-режиме код всегда BIO2026'); e.target.reset();}
+async function unban(email){if(sbReady){await supa.from('banned_emails').update({is_active:false,unbanned_at:new Date().toISOString()}).eq('email',email); renderAdmin();}}
+
+(async()=>{ if(sbReady){ const {data}=await supa.auth.getSession(); if(data.session?.user) await boot(data.session.user); } })();
+</script>
+</body>
+</html>
