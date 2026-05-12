@@ -52,10 +52,10 @@
           </form>
           <form id="registerForm" class="form hidden" onsubmit="register(event)">
             <label>ФИО<input class="input" id="regName" required placeholder="Иванов Иван Иванович"></label>
-            <label>Группа<input class="input" id="regGroup" required placeholder="701-16"></label>
+            <label>Группа<input class="input" id="regGroup" required placeholder="Н-12"></label>
             <label>Email<input class="input" id="regEmail" type="email" required></label>
             <label>Пароль<input class="input" id="regPassword" type="password" minlength="6" required></label>
-            <label>Общий код доступа<input class="input" id="regCode" required placeholder="Например: 9828828329823"></label>
+            <label>Общий код доступа<input class="input" id="regCode" required placeholder="Например: 12030713Ad"></label>
             <button class="btn primary" type="submit">Зарегистрироваться</button>
           </form>
         </div>
@@ -166,7 +166,6 @@
 // ====== НАСТРОЙКИ SUPABASE ======
 const SUPABASE_URL = 'https://rgpcweatksdtiaurzypo.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_OUT-dJAuWnixhB0JrBC8mw_aoZM6A15';
-const ADMIN_EMAIL = 'arhangelskiy31703021@gmail.com';
 const sbReady = SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY.length > 20;
 const supa = sbReady ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
@@ -205,17 +204,17 @@ async function register(e){e.preventDefault(); const full_name=$('regName').valu
   const {data,error}=await supa.auth.signUp({email,password,options:{data:{full_name,group_name}}});
   if(error) return msg(error.message,'bad');
   const currentUser = data.user;
-  if(currentUser?.id && data.session){ await supa.from('profiles').upsert({id:currentUser.id,email,full_name,group_name,role: email===ADMIN_EMAIL ? 'admin' : 'student'}); }
+  if(currentUser?.id && data.session){ await supa.from('profiles').upsert({id:currentUser.id,email,full_name,group_name,role:'student'}); }
   msg('Регистрация выполнена. Если Supabase просит подтверждение email, подтвердите почту и войдите.','good'); setAuthMode('login');
 }
-function demoLogin(email='demo@biotest.local'){const isAdmin=['admin@demo.local','arhangelskiy31703021@gmail.com'].includes(email.trim().toLowerCase());state.user={id:isAdmin?'demo-admin':'demo-user',email};state.profile={id:state.user.id,email,full_name:isAdmin?'Демо Админ':'Демо Студент',group_name:isAdmin?'ADMIN':'Н-12',role:isAdmin?'admin':'student'};boot(state.user)}
+function demoLogin(email='demo@biotest.local'){const isAdmin=email.trim().toLowerCase()==='admin@demo.local';state.user={id:isAdmin?'demo-admin':'demo-user',email};state.profile={id:state.user.id,email,full_name:isAdmin?'Демо Админ':'Демо Студент',group_name:isAdmin?'ADMIN':'Н-12',role:isAdmin?'admin':'student'};boot(state.user)}
 async function logout(){ if(sbReady) await supa.auth.signOut(); state.user=null; $('mainApp').classList.add('hidden'); $('authScreen').classList.remove('hidden'); }
 async function boot(user){ state.user=user; $('authScreen').classList.add('hidden'); $('mainApp').classList.remove('hidden'); await loadAll(); renderAll(); }
 
 async function loadAll(){
   if(!sbReady){ state.sections=demoSections; state.questions=demoQuestions; state.progress=JSON.parse(localStorage.bt_progress||'[]'); state.favorites=JSON.parse(localStorage.bt_fav||'[]'); state.attempts=JSON.parse(localStorage.bt_attempts||'[]'); return; }
   const {data:{user}}=await supa.auth.getUser(); state.user=user;
-  let p=await supa.from('profiles').select('*').eq('id',user.id).single(); state.profile=p.data || {id:user.id,email:user.email,full_name:user.email,group_name:'',role:(user.email||'').toLowerCase()===ADMIN_EMAIL?'admin':'student'};
+  let p=await supa.from('profiles').select('*').eq('id',user.id).single(); state.profile=p.data || {id:user.id,email:user.email,full_name:user.email,group_name:'',role:'student'};
   const [secs,qs,prog,fav,atts]=await Promise.all([
     supa.from('sections').select('*').eq('is_active',true).order('sort_order'),
     supa.from('questions').select('*, answers(*), match_pairs(*)').eq('is_active',true).order('sort_order'),
