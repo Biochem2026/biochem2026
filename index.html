@@ -52,10 +52,10 @@
           </form>
           <form id="registerForm" class="form hidden" onsubmit="register(event)">
             <label>ФИО<input class="input" id="regName" required placeholder="Иванов Иван Иванович"></label>
-            <label>Группа<input class="input" id="regGroup" required placeholder="Н-12"></label>
+            <label>Группа<input class="input" id="regGroup" required placeholder="701-16"></label>
             <label>Email<input class="input" id="regEmail" type="email" required></label>
             <label>Пароль<input class="input" id="regPassword" type="password" minlength="6" required></label>
-            <label>Общий код доступа<input class="input" id="regCode" required placeholder="Например: 12030713Ad"></label>
+            <label>Общий код доступа<input class="input" id="regCode" required placeholder="Например: нкапиан124d"></label>
             <button class="btn primary" type="submit">Зарегистрироваться</button>
           </form>
         </div>
@@ -234,7 +234,7 @@ function toggleTheme(){const next=document.documentElement.dataset.theme==='dark
 if(localStorage.bt_theme) document.documentElement.dataset.theme=localStorage.bt_theme;
 
 function eligibleQuestions(mode){let qs=state.questions.filter(q=>q.section_id===state.selectedSection); if(mode==='practice') qs=qs.filter(q=>!isPassed(q.id,'practice')); if(mode==='test') qs=qs.filter(q=>!isPassed(q.id,'test')); return qs;}
-function startPractice(n){let qs=eligibleQuestions('practice'); if(!qs.length) return allDone(); qs=shuffle(qs); if(n!=='all') qs=qs.slice(0,n); state.quiz={mode:'practice', queue:qs, current:null, index:0, answers:[], started:Date.now(), awaiting:false}; showScreen('quizScreen'); nextQuestion();}
+function startPractice(n){let qs=eligibleQuestions('practice'); if(!qs.length) return allDone(); qs=qs.sort((a,b)=>state.questions.findIndex(q=>q.id===a.id)-state.questions.findIndex(q=>q.id===b.id)); if(n!=='all') qs=qs.slice(0,n); state.quiz={mode:'practice', queue:qs, current:null, index:0, answers:[], started:Date.now(), awaiting:false}; showScreen('quizScreen'); nextQuestion();}
 function startTest(){let qs=eligibleQuestions('test'); if(!qs.length) return allDone(); qs=shuffle(qs).slice(0,15); state.quiz={mode:'test', queue:qs, current:null, index:0, answers:[], started:Date.now(), awaiting:false}; showScreen('quizScreen'); nextQuestion();}
 async function allDone(){alert('Все задания пройдены. Начать заново?'); if(confirm('Сбросить прогресс этого раздела?')){ state.progress=state.progress.filter(p=>p.section_id!==state.selectedSection); if(sbReady) await supa.from('student_progress').delete().eq('user_id',state.user.id).eq('section_id',state.selectedSection); else persistLocal(); renderAll(); }}
 function stopQuiz(){clearInterval(timerInt); showScreen('testing')}
